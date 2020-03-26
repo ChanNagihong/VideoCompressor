@@ -44,6 +44,9 @@ import java.nio.ByteBuffer;
 class MediaFormatValidator {
     // Refer: http://en.wikipedia.org/wiki/H.264/MPEG-4_AVC#Profiles
     private static final byte PROFILE_IDC_BASELINE = 66;
+    private static final byte PROFILE_IDC_EXTENDED = 88;
+    private static final byte PROFILE_IDC_MAIN = 77;
+    private static final byte PROFILE_IDC_HIGH = 100;
 
     /**
      * 1、check mime type
@@ -59,8 +62,12 @@ class MediaFormatValidator {
         }
         ByteBuffer spsBuffer = AvcCsdUtils.getSpsBuffer(format);
         byte profileIdc = AvcSpsUtils.getProfileIdc(spsBuffer);
-        if (profileIdc != PROFILE_IDC_BASELINE) {
-            throw new InvalidOutputFormatException("Non-baseline AVC video profile is not supported by Android OS, actual profile_idc: " + profileIdc);
+        boolean baseline = profileIdc == PROFILE_IDC_BASELINE;
+        boolean extended = profileIdc == PROFILE_IDC_EXTENDED;
+        boolean main = profileIdc == PROFILE_IDC_MAIN;
+        boolean high = profileIdc == PROFILE_IDC_HIGH;
+        if (!baseline && !extended && !main && !high) {
+            throw new InvalidOutputFormatException("Non AVC video profile is not supported by Android OS, actual profile_idc: " + profileIdc);
         }
     }
 

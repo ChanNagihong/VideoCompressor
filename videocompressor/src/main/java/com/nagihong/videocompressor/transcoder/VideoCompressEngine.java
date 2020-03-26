@@ -1,9 +1,12 @@
 package com.nagihong.videocompressor.transcoder;
 
+import android.content.Context;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 
 import com.nagihong.videocompressor.strategies.MediaFormatStrategy;
@@ -14,10 +17,12 @@ import com.nagihong.videocompressor.trackTranscoder.VideoTrackTranscoder;
 import com.nagihong.videocompressor.utils.FileUtils;
 import com.nagihong.videocompressor.utils.MediaExtractorUtils;
 
+import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 
 // TODO: treat encrypted data
 public class VideoCompressEngine {
@@ -62,8 +67,8 @@ public class VideoCompressEngine {
      * @throws InvalidOutputFormatException when output format is not supported.
      * @throws InterruptedException         when cancel to transcode.
      */
-    public void transcodeVideo(String inputPath, String outputPath, MediaFormatStrategy formatStrategy) throws IOException, InterruptedException {
-        setup(inputPath, outputPath);
+    public void transcodeVideo(Context context, String inputPath, String outputPath, MediaFormatStrategy formatStrategy) throws IOException, InterruptedException {
+        setup(context, inputPath, outputPath);
         //start transcoding
         extractor = new MediaExtractor(); // NOTE: use single extractor to keep from running out audio track fast.
         extractor.setDataSource(inputFileDescriptor);
@@ -76,24 +81,31 @@ public class VideoCompressEngine {
         release();
     }
 
-    private void setup(String inputPath, String outputPath) {
+    private void setup(Context context, String inputPath, String outputPath) {
         this.inputPath = inputPath;
         this.outputPath = outputPath;
 
-        //checkers
-        if (null == inputPath) {
-            throw new NullPointerException("Input path cannot be null.");
-        }
-        if (null == outputPath) {
-            throw new NullPointerException("Output path cannot be null.");
-        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Uri uri = Uri.parse(new File(inputPath).toURI().toString());
+            try {
+                inputFileDescriptor = context.getContentResolver().openFile(uri, "r", null).getFileDescriptor();
+            } catch (FileNotFoundException | NullPointerException e) {
+                e.printStackTrace();
+            }
+        } else {
+            //checkers
+            if (null == inputPath) {
+                throw new NullPointerException("Input path cannot be null.");
+            }
+            if (null == outputPath) {
+                throw new NullPointerException("Output path cannot be null.");
+            }
 
-        try {
-            inputFileDescriptor = new FileInputStream(inputPath).getFD();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            try {
+                inputFileDescriptor = new FileInputStream(inputPath).getFD();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         if (inputFileDescriptor == null) {

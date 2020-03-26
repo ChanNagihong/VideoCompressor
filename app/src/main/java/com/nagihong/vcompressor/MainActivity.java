@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 super.run();
-                new VideoCompressor().compressVideo(path, output);
+                new VideoCompressor().compressVideo(MainActivity.this, path, output);
                 findViewById(R.id.output).post(() -> {
                     showOutput(output);
                     hideProgress();
