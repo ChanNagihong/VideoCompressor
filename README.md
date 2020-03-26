@@ -1,5 +1,6 @@
 # VideoCompressor
 Android video compressor
+2020/03/26 - Version 1.0.1, works on Android Q from now on.
 
 ### Gradle  
 ```Gradle
